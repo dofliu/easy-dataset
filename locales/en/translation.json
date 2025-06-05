@@ -1,9 +1,11 @@
 {
   "language": {
     "switchToEnglish": "Switch to English",
-    "switchToChinese": "Switch to Chinese",
+    "switchToSimChinese": "切換到簡體中文",
+    "switchToTraChinese": "切換到繁體中文",
     "en": "EN",
-    "zh": "中"
+    "zh": "簡中",
+    "tw": "繁中"
   },
   "theme": {
     "switchToLight": "Switch to Light Mode",
