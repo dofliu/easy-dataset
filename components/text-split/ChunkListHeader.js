@@ -14,6 +14,7 @@ export default function ChunkListHeader({
   selectedChunks,
   onSelectAll,
   onBatchGenerateQuestions,
+  onBatchEditChunks,
   questionFilter,
   setQuestionFilter,
   chunks = [], // 添加chunks参数，用于导出文本块
@@ -30,7 +31,7 @@ export default function ChunkListHeader({
 
     try {
       // 调用创建任务接口
-      const response = await axios.post(`/api/projects/${projectId}/tasks/list`, {
+      const response = await axios.post(`/api/projects/${projectId}/tasks`, {
         taskType: 'question-generation',
         modelInfo: selectedModel,
         language: i18n.language,
@@ -103,6 +104,19 @@ export default function ChunkListHeader({
           <MenuItem value="generated">{t('textSplit.generatedQuestions2')}</MenuItem>
           <MenuItem value="ungenerated">{t('textSplit.ungeneratedQuestions')}</MenuItem>
         </Select>
+
+        <Tooltip title={t('batchEdit.batchEditTooltip', { defaultValue: '批量编辑选中的文本块' })}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<AutoFixHighIcon />}
+            disabled={selectedChunks.length === 0}
+            onClick={onBatchEditChunks}
+            sx={{ mr: 1 }}
+          >
+            {t('batchEdit.batchEdit', { defaultValue: '批量编辑' })}
+          </Button>
+        </Tooltip>
 
         <Button
           variant="contained"

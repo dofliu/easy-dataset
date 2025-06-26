@@ -202,6 +202,7 @@
     "deleteConfirmTitle": "Confirm Delete"
   },
   "textSplit": {
+    "fileList": "File List",
     "autoGenerateQuestions": "Auto Generate",
     "autoGenerateQuestionsTip": "Create background batch processing tasks: automatically query text blocks pending question generation and extract questions.",
     "exportChunks": "Export Chunks",
@@ -280,16 +281,20 @@
     "viewDetails": "View Details",
     "generateQuestions": "Generate Questions",
     "charsCount": "Characters",
-    "pdfProcessStatus": "Total {{total}} PDF files, {{completed}} have been converted",
-    "pdfProcessing": "Converting PDF file...",
-    "pdfProcessingFailed": "PDF file conversion failed!",
-    "pdfProcess": "PDF file detected!",
-    "selectPdfProcessingStrategy": "Please select the PDF processing method:",
+    "pdfProcessStatus": "Total {{total}} files, {{completed}} have been converted",
+    "pdfPageProcessStatus": "Processing {{fileName}}, {{completed}} out of {{total}} pages converted",
+    "pdfProcessing": "Converting file...",
+    "pdfProcessingFailed": "File conversion failed!",
+    "pdfProcess": "File detected!",
+    "selectPdfProcessingStrategy": "Please select the file processing method:",
     "pdfProcessingStrategyDefault": "Default",
     "pdfProcessingStrategyDefaultHelper": "Use the built-in PDF parsing strategy",
     "pdfProcessingStrategyMinerUHelper": "Use MinerU API for parsing. Please configure the MinerU API Token first",
     "pdfProcessingStrategyVision": "Custom Vision Model",
     "pdfProcessingStrategyVisionHelper": "Use a custom vision model for parsing",
+    "pdfProcessingToast": "File detected. The system will create a background task to parse the file",
+    "pdfProcessingWaring": "There is a file processing task in progress. It is recommended to wait for the task to complete before performing other operations, otherwise it may affect the quality of data generation!",
+    "pdfProcessingLoading": "Executing file conversion task, please wait for the task to complete before uploading new files...",
     "basicPdfParsing": "Basic PDF Parsing",
     "basicPdfParsingDesc": "Capable of identifying the key outlines of simple PDF files with high speed",
     "mineruApiDesc": "Capable of identifying complex PDF files, including formulas and charts (Requires configuration of MinerU API Key)",
@@ -519,7 +524,8 @@
     "normalOutput": "Normal Output",
     "streamingOutput": "Streaming Output",
     "clearConversation": "Clear Conversation",
-    "selectModelMax3": "Please select up to 3 models to test"
+    "selectModelMax3": "Please select up to 3 models to test",
+    "reasoningProcess": "Reasoning Chain"
   },
   "chunks": {
     "title": "Text Chunk",
@@ -675,7 +681,8 @@
       "text-processing": "Text Processing",
       "question-generation": "Question Generation",
       "answer-generation": "Answer Generation",
-      "data-distillation": "Data Distillation"
+      "data-distillation": "Data Distillation",
+      "pdf-processing": "PDF Processing"
     },
     "filters": {
       "status": "Task Status",
@@ -771,6 +778,28 @@
     "fetchModelConfigFailed": "Failed to fetch model config: {{status}}",
     "fetchProjectModelError": "Error fetching project model configuration",
     "batchGenerationFailed": "Batch GA pair generation failed",
-    "batchGenerationSuccess": "Successfully generated GA pairs for {{count}} files"
+    "batchGenerationSuccess": "Successfully generated GA pairs for {{count}} files",
+    "selectAllFiles": "Select All",
+    "deselectAllFiles": "Deselect All"
+  },
+  "batchEdit": {
+    "title": "Batch Edit Text Chunks",
+    "batchEdit": "Batch Edit",
+    "batchEditTooltip": "Batch edit selected text chunks",
+    "position": "Add Position",
+    "atBeginning": "Add at Beginning",
+    "atEnd": "Add at End",
+    "contentToAdd": "Content to Add",
+    "contentPlaceholder": "Enter content to add to text chunks...",
+    "contentRequired": "Please enter content to add",
+    "contentHelp": "This content will be added to all selected text chunks",
+    "preview": "Preview",
+    "allChunksSelected": "All {{count}} text chunks selected",
+    "selectedChunks": "{{selected}} / {{total}} text chunks selected",
+    "processing": "Processing...",
+    "applyToChunks": "Apply to {{count}} chunks",
+    "editSuccess": "Successfully edited {{count}} text chunks",
+    "editFailed": "Batch edit failed",
+    "previewNote": "The above is a preview of the first selected text chunk. All selected text chunks will undergo the same modification"
   }
 }

@@ -18,14 +18,17 @@ import {
   DialogContentText,
   DialogActions,
   FormControlLabel,
-  Switch
+  Switch,
+  Pagination
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
   Download,
   Delete as DeleteIcon,
   FilePresent as FileIcon,
-  Psychology as PsychologyIcon
+  Psychology as PsychologyIcon,
+  CheckBox as SelectAllIcon,
+  CheckBoxOutlineBlank as DeselectAllIcon
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +45,10 @@ export default function FileList({
   onDeleteFile,
   sendToFileUploader,
   projectId,
-  setPageLoading
+  setPageLoading,
+  currentPage = 1,
+  onPageChange,
+  isFullscreen = false // 新增参数，用于控制是否处于全屏状态
 }) {
   const { t } = useTranslation();
 
@@ -79,6 +85,42 @@ export default function FileList({
       }
       return newArray;
     });
+  };
+
+  // 全选文件（包括所有页面的文件）
+  const handleSelectAll = async () => {
+    try {
+      // 获取项目中所有文件的ID
+      const response = await fetch(`/api/projects/${projectId}/files?getAllIds=true`);
+      if (!response.ok) {
+        throw new Error('获取文件列表失败');
+      }
+
+      const data = await response.json();
+      const allFileIds = data.allFileIds || [];
+
+      setArray(allFileIds);
+      if (typeof sendToFileUploader === 'function') {
+        sendToFileUploader(allFileIds);
+      }
+    } catch (error) {
+      console.error('全选文件失败:', error);
+      // 如果API调用失败，回退到选择当前页面的文件
+      if (files?.data?.length > 0) {
+        const currentPageFileIds = files.data.map(file => String(file.id));
+        setArray(currentPageFileIds);
+        if (typeof sendToFileUploader === 'function') {
+          sendToFileUploader(currentPageFileIds);
+        }
+      }
+    }
+  };
+  // 取消全选
+  const handleDeselectAll = () => {
+    setArray([]);
+    if (typeof sendToFileUploader === 'function') {
+      sendToFileUploader([]);
+    }
   };
 
   const handleCloseViewDialog = () => {
@@ -342,16 +384,42 @@ export default function FileList({
 
         {/* 批量生成GA对按钮 */}
         {files.total > 0 && (
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            startIcon={<PsychologyIcon />}
-            onClick={openBatchGenDialog}
-            disabled={loading}
-          >
-            {t('gaPairs.batchGenerate')}
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {/* 全选/取消全选按钮 */}
+            {array.length === files.total ? (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<SelectAllIcon />}
+                onClick={handleDeselectAll}
+                disabled={loading}
+              >
+                {t('gaPairs.deselectAllFiles')}
+              </Button>
+            ) : (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DeselectAllIcon />}
+                onClick={handleSelectAll}
+                disabled={loading}
+              >
+                {t('gaPairs.selectAllFiles')}
+              </Button>
+            )}
+
+            {/* 批量生成GA对按钮 */}
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              startIcon={<PsychologyIcon />}
+              onClick={openBatchGenDialog}
+              disabled={loading}
+            >
+              {t('gaPairs.batchGenerate')}
+            </Button>
+          </Box>
         )}
       </Box>
 
@@ -366,23 +434,78 @@ export default function FileList({
           </Typography>
         </Box>
       ) : (
-        <List sx={{ maxHeight: '200px', overflow: 'auto', width: '100%' }}>
-          {files?.data?.map((file, index) => (
-            <Box key={index}>
-              <ListItem
-                secondaryAction={
-                  <Box sx={{ display: 'flex' }}>
+        <>
+          <List
+            sx={{
+              maxHeight: isFullscreen ? 'none' : '200px', // 根据 isFullscreen 控制最大高度
+              overflow: 'auto',
+              width: '100%'
+            }}
+            dense // 使列表项更紧凑，减少高度
+          >
+            {files?.data?.map((file, index) => (
+              <Box key={index}>
+                <ListItem
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    flexWrap: 'nowrap',
+                    pr: 0 // 移除右侧内边距，便于自定义操作区域位置
+                  }}
+                >
+                  {/* 文件信息区域 */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      overflow: 'hidden', // 隐藏溢出内容
+                      maxWidth: '70%', // 限制文件信息区域最大宽度
+                      flexGrow: 1,
+                      mr: 2 // 与操作区域保持间距
+                    }}
+                  >
+                    <FileIcon color="primary" sx={{ mr: 1, flexShrink: 0 }} />
+                    <Tooltip title={`${file.fileName}（${t('textSplit.viewDetails')}）`}>
+                      <ListItemText
+                        style={{ cursor: 'pointer', overflow: 'hidden' }}
+                        onClick={() => handleViewContent(file.id)}
+                        primary={
+                          <Typography
+                            noWrap // 文本不换行并显示省略号
+                            variant="body1"
+                            component="div"
+                          >
+                            {file.fileName}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography
+                            noWrap // 文本不换行并显示省略号
+                            variant="body2"
+                            color="textSecondary"
+                            component="div"
+                          >
+                            {`${formatFileSize(file.size)} · ${new Date(file.createAt).toLocaleString()}`}
+                          </Typography>
+                        }
+                      />
+                    </Tooltip>
+                  </Box>
+
+                  {/* 操作按钮区域 */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexShrink: 0, // 防止操作区域被压缩
+                      alignItems: 'center'
+                    }}
+                  >
                     <Checkbox
-                      sx={{ mr: 1 }}
+                      sx={{ ml: 1 }}
                       checked={array.includes(String(file.id))}
                       onChange={e => handleCheckboxChange(file.id, e.target.checked)}
                     />
                     <GaPairsIndicator projectId={projectId} fileId={file.id} fileName={file.fileName} />
-                    {/* <Tooltip title={t('textSplit.viewDetails')}>
-                      <IconButton color="primary" onClick={() => handleViewContent(file.id)}>
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip> */}
                     <Tooltip title={t('textSplit.download')}>
                       <IconButton color="primary" onClick={() => handleDownload(file.id, file.fileName)}>
                         <Download />
@@ -394,24 +517,26 @@ export default function FileList({
                       </IconButton>
                     </Tooltip>
                   </Box>
-                }
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <FileIcon color="primary" sx={{ mr: 1 }} />
-                  <Tooltip title={`${file.fileName}（${t('textSplit.viewDetails')}）`}>
-                    <ListItemText
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleViewContent(file.id)}
-                      primary={file.fileName}
-                      secondary={`${formatFileSize(file.size)} · ${new Date(file.createAt).toLocaleString()}`}
-                    />
-                  </Tooltip>
-                </Box>
-              </ListItem>
-              {index < files.data.length - 1 && <Divider />}
+                </ListItem>
+                {index < files.data.length - 1 && <Divider />}
+              </Box>
+            ))}
+          </List>
+
+          {/* 分页控件 */}
+          {files.total > 10 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Pagination
+                count={Math.ceil(files.total / 10)} // 假设每页10个文件
+                page={currentPage}
+                onChange={(event, page) => onPageChange && onPageChange(page)}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
             </Box>
-          ))}
-        </List>
+          )}
+        </>
       )}
 
       {/* 现有的文本块详情对话框 */}

@@ -6,6 +6,7 @@ import ChunkListHeader from './ChunkListHeader';
 import ChunkCard from './ChunkCard';
 import ChunkViewDialog from './ChunkViewDialog';
 import ChunkDeleteDialog from './ChunkDeleteDialog';
+import BatchEditChunksDialog from './BatchEditChunkDialog';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 
@@ -30,7 +31,8 @@ export default function ChunkList({
   loading = false,
   questionFilter,
   setQuestionFilter,
-  selectedModel
+  selectedModel,
+  onChunksUpdate
 }) {
   const theme = useTheme();
   const [page, setPage] = useState(1);
@@ -39,6 +41,8 @@ export default function ChunkList({
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chunkToDelete, setChunkToDelete] = useState(null);
+  const [batchEditDialogOpen, setBatchEditDialogOpen] = useState(false);
+  const [batchEditLoading, setBatchEditLoading] = useState(false);
 
   // 对文本块进行排序，先按文件ID排序，再按part-后面的数字排序
   const sortedChunks = [...chunks].sort((a, b) => {
@@ -110,6 +114,7 @@ export default function ChunkList({
   const handleEditChunk = async (chunkId, newContent) => {
     if (onEdit) {
       onEdit(chunkId, newContent);
+      onChunksUpdate();
     }
   };
 
@@ -138,6 +143,64 @@ export default function ChunkList({
     }
   };
 
+  const handleBatchEdit = async editData => {
+    try {
+      setBatchEditLoading(true);
+
+      // 调用批量编辑API
+      const response = await fetch(`/api/projects/${projectId}/chunks/batch-edit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          position: editData.position,
+          content: editData.content,
+          chunkIds: editData.chunkIds
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('批量编辑失败');
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // 编辑成功后，刷新文本块数据
+        if (onChunksUpdate) {
+          onChunksUpdate();
+        }
+
+        // 清空选中状态
+        setSelectedChunks([]);
+
+        // 关闭对话框
+        setBatchEditDialogOpen(false);
+
+        // 显示成功消息
+        console.log(`成功更新了 ${result.updatedCount} 个文本块`);
+      } else {
+        throw new Error(result.message || '批量编辑失败');
+      }
+    } catch (error) {
+      console.error('批量编辑失败:', error);
+      // 这里可以添加错误提示
+    } finally {
+      setBatchEditLoading(false);
+    }
+  };
+
+  // 打开批量编辑对话框
+  const handleOpenBatchEdit = () => {
+    setBatchEditDialogOpen(true);
+  };
+
+  // 关闭批量编辑对话框
+  const handleCloseBatchEdit = () => {
+    setBatchEditDialogOpen(false);
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -154,6 +217,7 @@ export default function ChunkList({
         selectedChunks={selectedChunks}
         onSelectAll={handleSelectAll}
         onBatchGenerateQuestions={handleBatchGenerateQuestions}
+        onBatchEditChunks={handleOpenBatchEdit}
         questionFilter={questionFilter}
         setQuestionFilter={event => setQuestionFilter(event.target.value)}
         chunks={chunks}
@@ -172,6 +236,7 @@ export default function ChunkList({
               onEdit={handleEditChunk}
               onGenerateQuestions={() => onGenerateQuestions && onGenerateQuestions([chunk.id])}
               projectId={projectId}
+              selectedModel={selectedModel}
             />
           </Grid>
         ))}
@@ -203,6 +268,16 @@ export default function ChunkList({
 
       {/* 删除确认对话框 */}
       <ChunkDeleteDialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog} onConfirm={handleConfirmDelete} />
+
+      {/* 批量编辑对话框 */}
+      <BatchEditChunksDialog
+        open={batchEditDialogOpen}
+        onClose={handleCloseBatchEdit}
+        onConfirm={handleBatchEdit}
+        selectedChunks={selectedChunks}
+        totalChunks={chunks.length}
+        loading={batchEditLoading}
+      />
     </Box>
   );
 }
